@@ -5,118 +5,183 @@
 #define max_autor 50	
 using namespace std;
 //Declaracion de la estructura "libro"
-struct libros{
+typedef struct{
 	char titulo[max_titulo];
 	char autor[max_autor];
 	int publicacion;
-}libro[100];
+}Libro;
+//Estructura para nodo
+typedef struct nodo {
+    Libro libro;
+    struct nodo* siguiente;
+} Nodo;
+//estructura para lista enlazada simple
+typedef struct {
+	Nodo* cabeza;
+	int tamaño;
+} ListaLibros;
 
 ///FUNCIONES///
+//Inilicializacion de la lista
+void inicializarLista(ListaLibros* lista) {
+	lista->cabeza = NULL;
+	lista->tamaño = 0;
+}
+//liberar lista de libros
+void liberarLista(ListaLibros* lista) {
+	Nodo* actual = lista->cabeza;
+	Nodo* siguiente;
+	while (actual != NULL) {
+		siguiente = actual->siguiente;
+		free(actual);
+		actual = siguiente;
+	}
+	lista->cabeza = NULL;
+	lista->tamaño = 0;
+}
 //Funcion ingreso de libros
-void ingreso(int* cl) {
-	printf("\nIngreso de nuevo libro:\n");
-	printf("Ingrese el titulo del libro:");
-	fgets(libro[*cl].titulo,max_titulo, stdin);
-    //Validación de datos de titulo ingresado
-	size_t len = strlen(libro[*cl].titulo);
-    if (len > 0 && libro[*cl].titulo[len-1] == '\n') {
-        libro[*cl].titulo[len-1] = '\0';
-    }
-    if (strlen(libro[*cl].titulo) == 0) {
-        printf("Error: La etiqueta no puede estar vacía.\n");
-        return;
-    }
-
-	printf("Ingrese el autor del libro:");
-	fgets(libro[*cl].autor,max_autor, stdin);
-    //Validación de datos de autor ingresado
-	size_t len = strlen(libro[*cl].autor);
-    if (len > 0 && libro[*cl].autor[len-1] == '\n') {
-        libro[*cl].autor[len-1] = '\0';
-    }
-    if (strlen(libro[*cl].autor) == 0) {
-        printf("Error: La etiqueta no puede estar vacía.\n");
-        return;
-    }
-
-	printf("Ingrese el año de publicacion del libro: ");
- 	if (scanf("%d", &libro[*cl].publicacion) != 1) {
-        printf("Error: Debe ingresar un número válido.\n");
-        while (getchar() != '\n');
-        return;
-    }
-	if (libro[*cl].publicacion < 0) {
-        printf("Error: El año no puede ser negativo.\n");
-        while (getchar() != '\n');
-        return;
-    }
-	*cl++;
+void ingreso(ListaLibros* lista) {
+	Libro nuevoLibro;
+	printf("=== INGRESO DE NUEVO LIBRO ===\n");
+	printf("Ingrese el titulo del libro: ");
+	getchar(); // Consume el \n anterior
+	fgets(nuevoLibro.titulo, max_titulo, stdin);
+	// Remueve el \n del final de la cadena
+	size_t len = strlen(nuevoLibro.titulo);
+	if (len > 0 && nuevoLibro.titulo[len-1] == '\n') {
+		nuevoLibro.titulo[len-1] = '\0';
+	}
+	if (strlen(nuevoLibro.titulo) == 0) {
+		printf("Error: El título no puede estar vacío.\n");
+		return;
+	}
+	printf("Ingrese el autor del libro: ");
+	fgets(nuevoLibro.autor, max_autor, stdin);
+	// Remueve el \n del final de la cadena
+	len = strlen(nuevoLibro.autor);
+	if (len > 0 && nuevoLibro.autor[len-1] == '\n') {
+		nuevoLibro.autor[len-1] = '\0';
+	}
+	if (strlen(nuevoLibro.autor) == 0) {
+		printf("Error: El autor no puede estar vacío.\n");
+		return;
+	}
+	printf("Ingrese el año de publicación del libro: ");
+	if (scanf("%d", &nuevoLibro.publicacion) != 1 || nuevoLibro.publicacion < 0) {
+		printf("Error: Debe ingresar un año válido.\n");
+		while (getchar() != '\n'); // Limpiar buffer
+		return;
+	}
+	// Crear nuevo nodo
+	Nodo* nuevoNodo = (Nodo*)malloc(sizeof(Nodo));
+	if (nuevoNodo == NULL) {
+		printf("Error: No se pudo asignar memoria.\n");
+		return;
+	}
+	// Copiar el libro al nodo
+	nuevoNodo->libro = nuevoLibro;
+	nuevoNodo->siguiente = lista->cabeza;
+	lista->cabeza = nuevoNodo;
+	lista->tamaño++;
+	printf("Libro agregado exitosamente.\n");
+	printf("Título: %s | Autor: %s | Año: %d\n", 
+			nuevoLibro.titulo, 
+			nuevoLibro.autor, 
+			nuevoLibro.publicacion);
 }
 //funcion para mostrar los libros cargados
-void mostrar(int cl){
-	int i;
-	printf("\n\n");
-	for(i=0;i<cl;i++){
-		printf("Libro N�: %d\n", i);
-		printf("Titulo: %s\n",libro[i].titulo);
-		printf("Autor: %s\n",libro[i].autor);
-		printf("A�o de publicacion: %d\n",libro[i].publicacion);
+void mostrar(ListaLibros* lista) {
+	if (lista->tamaño == 0) {
+		printf("No hay libros en la lista.\n");
+		return;
+	}
+	printf("=== LISTA DE LIBROS ===\n");
+	Nodo* actual = lista->cabeza;
+	int indice = 1;
+	while (actual != NULL) {
+		printf("Libro %d:\n", indice);
+		printf("Título: %s\n", actual->libro.titulo);
+		printf("Autor: %s\n", actual->libro.autor);
+		printf("Año de publicación: %d\n", actual->libro.publicacion);
+		printf("-----------------------\n");
+		actual = actual->siguiente;
+		indice++;
 	}
 }
 // funcion para buscar por titulo
-void btitulo(char *tit, int cl){
-	int i,ba=0,cmp;
-	for(i=0;i<cl;i++){
-		cmp=strcmp(tit,libro[i].titulo);
-		if(cmp==0){
-			ba=1;
-			printf("Libro N�: %d\n", i);
-			printf("Titulo: %s\n",libro[i].titulo);
-			printf("Autor: %s\n",libro[i].autor);
-			printf("A�o de publicacion: %d\n",libro[i].publicacion);
-		}
+void btitulo(ListaLibros* lista,char *tit){
+	Nodo* actual = lista->cabeza;
+	int indice = 1;
+	int encontrados = 0;
+	if (lista->tamaño == 0) {
+		printf("No hay libros en la lista.\n");
+		return;
 	}
-	if(ba==0){
-		printf("El titulo del libro no se encuentra en la lista.");
+	while (actual != NULL ){
+		if (actual->libro.titulo == tit) 
+		{
+		printf("Libro %d:\n", indice);
+		printf("Título: %s\n", actual->libro.titulo);
+		printf("Autor: %s\n", actual->libro.autor);
+		printf("Año de publicación: %d\n", actual->libro.publicacion);
+		printf("-----------------------\n\n");
+
+		}
+		actual = actual->siguiente;
+		indice++;
+	}
+	if(encontrados == 0 ){
+		printf("El Titulo del libro ingresado no corresponde a un libro registrado.\n\n\n");
 	}
 }
 //funcion para buscar por autor
-void bautor(char *aut, int cl){
-	int i,ba=0,cmp;
-	for(i=0;i<cl;i++){
-		cmp=strcmp(aut,libro[i].autor);
-		if(cmp==0){
-			ba=1;
-			printf("\n\n");
-			printf("Libro N�: %d\n", i);
-			printf("Titulo: %s\n",libro[i].titulo);
-			printf("Autor: %s\n",libro[i].autor);
-			printf("A�o de publicacion: %d\n",libro[i].publicacion);
-		}
+void bautor(ListaLibros* lista,char *aut){
+	Nodo* actual = lista->cabeza;
+	int indice = 1;
+	int encontrados = 0;
+	if (lista->tamaño == 0) {
+		printf("No hay libros en la lista.\n");
+		return;
 	}
-	if(ba==0){
-		printf("El Autor no posee libros en la lista.\n\n");
+	while (actual != NULL ){
+		if (actual->libro.autor == aut){
+			printf("Libro %d:\n", indice);
+			printf("Título: %s\n", actual->libro.titulo);
+			printf("Autor: %s\n", actual->libro.autor);
+			printf("Año de publicación: %d\n", actual->libro.publicacion);
+			printf("-----------------------\n\n");
+		}
+		actual = actual->siguiente;
+		indice++;
+	}
+	if(encontrados == 0 ){
+		printf("El Autor ingresado no contiene ningun libro cargado.\n\n\n");
 	}
 }
 //funcion para buscar por ano
-void bano(int a, int cl){
-	int i,ba=0,cmp;
-	for(i=0;i<cl;i++){
-		if(a==libro[i].publicacion){
-			ba=1;
-			printf("\n\n");
-			printf("Libro N�: %d\n", i);
-			printf("Titulo: %s\n",libro[i].titulo);
-			printf("Autor: %s\n",libro[i].autor);
-			printf("A�o de publicacion: %d\n",libro[i].publicacion);
-		}
+void bano(ListaLibros* lista,int a){
+	Nodo* actual = lista->cabeza;
+	if(lista->tamaño == 0) {
+		printf("No hay libros en la lista.\n");
+		return;
 	}
-	if(ba==0){
-		printf("No hay libros publicados en ese a�o en la lista.\n\n");
+	int encontrados = 0;
+	while (actual != NULL ){
+		if (actual->libro.publicacion == a){
+			printf("Título: %s\n", actual->libro.titulo);
+			printf("Autor: %s\n", actual->libro.autor);
+			printf("Año de publicación: %d\n", actual->libro.publicacion);
+			printf("-----------------------\n\n");
+			encontrados++;
+		}
+		actual = actual->siguiente;
+	}
+	if (encontrados == 0) {
+		printf("No hay libros publicados en ese año en la lista.\n\n");
 	}
 }
 //funcion para buscar un libro 
-void buscar(int cl){
+void buscar(ListaLibros* lista){
 	int opc,a;
 	char tit[max_titulo],aut[max_autor]; 
 	printf("Como desea buscar el archivo.\n");
@@ -136,7 +201,7 @@ void buscar(int cl){
         	printf("Error: La etiqueta no puede estar vacía.\n");
         return;
     	}
-		btitulo(tit, cl);
+		btitulo(lista , tit);
 		break;
 	case 2:
 		printf("Ingrese el autor del libro:\n");
@@ -150,7 +215,7 @@ void buscar(int cl){
         	printf("Error: La etiqueta no puede estar vacía.\n");
         return;
     	}
-		bautor(aut, cl);
+		bautor(lista,aut);
 		break;
 	case 3:
 		printf("Ingrese el a�o de publicaci�n del libro:\n");
@@ -165,7 +230,7 @@ void buscar(int cl){
        		while (getchar() != '\n');
         	return;
     	}
-		bano(a,cl);
+		bano(lista,a);
 	}
 }
 //funcion para guardar archivo
@@ -184,6 +249,8 @@ void buscar(int cl){
 */
 //FUNCION PRINCIPAL
 int main(int argc, char *argv[]) {
+	ListaLibros lista;
+	inicializarLista(&lista);
 	int op;
 	int ban=0;
 	int cl=0;
@@ -196,13 +263,13 @@ int main(int argc, char *argv[]) {
 		scanf("%d",&op);
 		switch(op){
 		case 1:
-			ingreso(&cl);//Por cada libro que se ingresa cl (Cantida libros) aumenta 
+			ingreso(&lista);//Por cada libro que se ingresa cl (Cantida libros) aumenta 
 			break;
 		case 2:
-			mostrar(cl);//Muestra los libros almacenados
+			mostrar(&lista);//Muestra los libros almacenados
 			break;
 		case 3:
-			buscar(cl);
+			buscar(&lista);//Busca un libro por titulo, autor o año de publicación
 			break;
 		case 4:
 			//guardara(cl);
